@@ -12,7 +12,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -20,6 +19,7 @@ import (
 	"github.com/asciimoo/omnom/config"
 	"github.com/asciimoo/omnom/model"
 	"github.com/asciimoo/omnom/storage"
+	"github.com/asciimoo/omnom/templates"
 
 	"github.com/gin-gonic/gin"
 
@@ -140,9 +140,7 @@ func addTemplate(r multitemplate.DynamicRender, root fs.FS, hasBase bool, name, 
 	}
 }
 
-func createRenderer(rootDir string) multitemplate.Renderer {
-	tplFS := os.DirFS(rootDir)
-
+func createRenderer(tplFS fs.FS) multitemplate.Renderer {
 	r := multitemplate.DynamicRender{}
 	addTemplate(r, tplFS, true, "index", "index.tpl")
 	addTemplate(r, tplFS, true, "dashboard", "dashboard.tpl")
@@ -320,7 +318,7 @@ func Run(cfg *config.Config) {
 	}
 	tplFuncMap["BaseURL"] = baseURL
 	tplFuncMap["URLFor"] = URLFor
-	e.HTMLRender = createRenderer(cfg.App.TemplateDir)
+	e.HTMLRender = createRenderer(templates.FS)
 
 	// ROUTES
 	e.Static("/static", cfg.App.StaticDir)
