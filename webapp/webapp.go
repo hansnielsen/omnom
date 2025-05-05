@@ -8,10 +8,11 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"io/fs"
 	"log"
 	"net/http"
 	"net/url"
-	"path/filepath"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -131,34 +132,36 @@ func getFullURL(c *gin.Context, u string) string {
 	return u
 }
 
-func addTemplate(r multitemplate.DynamicRender, rootDir string, hasBase bool, name, filename string) {
+func addTemplate(r multitemplate.DynamicRender, root fs.FS, hasBase bool, name, filename string) {
 	if hasBase {
-		r.AddFromFilesFuncs(name, tplFuncMap, filepath.Join(rootDir, "layout/base.tpl"), filepath.Join(rootDir, filename))
+		r.AddFromFSFuncs(name, tplFuncMap, root, "layout/base.tpl", filename)
 	} else {
-		r.AddFromFilesFuncs(name, tplFuncMap, filepath.Join(rootDir, filename))
+		r.AddFromFSFuncs(name, tplFuncMap, root, filename)
 	}
 }
 
 func createRenderer(rootDir string) multitemplate.Renderer {
+	tplFS := os.DirFS(rootDir)
+
 	r := multitemplate.DynamicRender{}
-	addTemplate(r, rootDir, true, "index", "index.tpl")
-	addTemplate(r, rootDir, true, "dashboard", "dashboard.tpl")
-	addTemplate(r, rootDir, true, "signup", "signup.tpl")
-	addTemplate(r, rootDir, true, "signup-confirm", "signup_confirm.tpl")
-	addTemplate(r, rootDir, true, "login", "login.tpl")
-	addTemplate(r, rootDir, true, "login-confirm", "login_confirm.tpl")
-	addTemplate(r, rootDir, true, "bookmarks", "bookmarks.tpl")
-	addTemplate(r, rootDir, true, "snapshots", "snapshots.tpl")
-	addTemplate(r, rootDir, true, "my-bookmarks", "my_bookmarks.tpl")
-	addTemplate(r, rootDir, true, "profile", "profile.tpl")
-	addTemplate(r, rootDir, true, "snapshot-wrapper", "snapshot_wrapper.tpl")
-	addTemplate(r, rootDir, true, "snapshot-details", "snapshot_details.tpl")
-	addTemplate(r, rootDir, true, "view-bookmark", "view_bookmark.tpl")
-	addTemplate(r, rootDir, true, "edit-bookmark", "edit_bookmark.tpl")
-	addTemplate(r, rootDir, true, "create-bookmark", "create_bookmark.tpl")
-	addTemplate(r, rootDir, true, "api", "api.tpl")
-	addTemplate(r, rootDir, true, "error", "error.tpl")
-	addTemplate(r, rootDir, false, "rss", "rss.xml")
+	addTemplate(r, tplFS, true, "index", "index.tpl")
+	addTemplate(r, tplFS, true, "dashboard", "dashboard.tpl")
+	addTemplate(r, tplFS, true, "signup", "signup.tpl")
+	addTemplate(r, tplFS, true, "signup-confirm", "signup_confirm.tpl")
+	addTemplate(r, tplFS, true, "login", "login.tpl")
+	addTemplate(r, tplFS, true, "login-confirm", "login_confirm.tpl")
+	addTemplate(r, tplFS, true, "bookmarks", "bookmarks.tpl")
+	addTemplate(r, tplFS, true, "snapshots", "snapshots.tpl")
+	addTemplate(r, tplFS, true, "my-bookmarks", "my_bookmarks.tpl")
+	addTemplate(r, tplFS, true, "profile", "profile.tpl")
+	addTemplate(r, tplFS, true, "snapshot-wrapper", "snapshot_wrapper.tpl")
+	addTemplate(r, tplFS, true, "snapshot-details", "snapshot_details.tpl")
+	addTemplate(r, tplFS, true, "view-bookmark", "view_bookmark.tpl")
+	addTemplate(r, tplFS, true, "edit-bookmark", "edit_bookmark.tpl")
+	addTemplate(r, tplFS, true, "create-bookmark", "create_bookmark.tpl")
+	addTemplate(r, tplFS, true, "api", "api.tpl")
+	addTemplate(r, tplFS, true, "error", "error.tpl")
+	addTemplate(r, tplFS, false, "rss", "rss.xml")
 	return r
 }
 
