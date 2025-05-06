@@ -10,6 +10,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -32,7 +33,7 @@ type App struct {
 	Debug                    bool   `yaml:"debug"`
 	ResultsPerPage           int64  `yaml:"results_per_page"`
 	DisableSignup            bool   `yaml:"disable_signup"`
-	StaticDir                string `yaml:"static_dir"`
+	StaticDir                string `yaml:"static_dir"` // Deprecated: use Storage.RootDir instead
 	CreateBookmarkFromWebapp bool   `yaml:"create_bookmark_from_webapp"`
 	WebappSnapshotterTimeout int    `yaml:"webapp_snapshotter_timeout"`
 }
@@ -51,6 +52,9 @@ type DB struct {
 
 type Storage struct {
 	Type string `yaml:"type"`
+
+	// "fs" backend
+	RootDir string `yaml:"root_dir"`
 }
 
 type SMTP struct {
@@ -132,6 +136,14 @@ func parseConfig(rawConfig []byte) (*Config, error) {
 	for pn, _ := range c.OAuth {
 		if _, ok := oauth.Providers[pn]; !ok {
 			return nil, errors.New("invalid oauth provider: " + pn)
+		}
+	}
+	if c.App.StaticDir != "" {
+		if c.Storage.RootDir == "" {
+			log.Printf("WARNING: app.static_dir is deprecated, use storage.root_dir instead to configure where bookmark content is stored")
+			c.Storage.RootDir = filepath.Join(c.App.StaticDir, "data")
+		} else {
+			return nil, errors.New("storage.root_dir is already configured, remove app.static_dir configuration")
 		}
 	}
 	return c, nil
