@@ -9,7 +9,7 @@ if(process.argv.length != 3) {
 let serverAddr = process.argv[2];
 let extId = '';
 let extBaseUrl = '';
-let testPageUrl = 'static/data/snapshots/83/8326b2287124efe25bec5a712509de986927692e7c1bbf85469c756c19b0a4be.gz';
+let testPageUrl = 'content/snapshots/83/8326b2287124efe25bec5a712509de986927692e7c1bbf85469c756c19b0a4be.gz';
 
 function sleep(time) {
     return new Promise(function(resolve) {

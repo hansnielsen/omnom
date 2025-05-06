@@ -57,7 +57,7 @@ var tplFuncMap = template.FuncMap{
 	"inc":        func(i int64) int64 { return i + 1 },
 	"dec":        func(i int64) int64 { return i - 1 },
 	"SnapshotURL": func(key string) string {
-		return fmt.Sprintf("%s%s/%s.gz", baseURL("/static/data/snapshots/"), key[:2], key)
+		return fmt.Sprintf("%s%s/%s.gz", baseURL("/content/snapshots/"), key[:2], key)
 	},
 	"AddURLParam": addURLParam,
 	"Truncate":    truncate,
@@ -346,6 +346,7 @@ func createEngine(cfg *config.Config) *gin.Engine {
 	tplFuncMap["BaseURL"] = baseURL
 	tplFuncMap["URLFor"] = URLFor
 	// ROUTES
+	e.Static("/content", cfg.App.StaticDir+"/data/")
 	e.Static("/static", cfg.App.StaticDir)
 	for _, ep := range Endpoints {
 		if ep.AuthRequired {
@@ -553,8 +554,8 @@ func ErrorLoggerMiddleware() gin.HandlerFunc {
 
 func GzipMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if strings.Contains(c.Request.URL.Path, "/static/data/") {
-			if strings.Contains(c.Request.URL.Path, "/static/data/snapshots") {
+		if strings.Contains(c.Request.URL.Path, "/content/") {
+			if strings.Contains(c.Request.URL.Path, "/content/snapshots") {
 				c.Header("Content-Type", "text/html; charset=utf-8")
 			}
 			c.Header("Content-Encoding", "gzip")
