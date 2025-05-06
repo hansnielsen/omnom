@@ -18,6 +18,7 @@ import (
 	"github.com/asciimoo/omnom/config"
 	"github.com/asciimoo/omnom/localization"
 	"github.com/asciimoo/omnom/model"
+	"github.com/asciimoo/omnom/static"
 	"github.com/asciimoo/omnom/storage"
 	"github.com/asciimoo/omnom/templates"
 
@@ -347,7 +348,7 @@ func createEngine(cfg *config.Config) *gin.Engine {
 	tplFuncMap["URLFor"] = URLFor
 	// ROUTES
 	e.Static("/content", cfg.App.StaticDir+"/data/")
-	e.Static("/static", cfg.App.StaticDir)
+	e.StaticFS("/static", http.FS(static.FS))
 	for _, ep := range Endpoints {
 		if ep.AuthRequired {
 			registerEndpoint(authorized, ep)
