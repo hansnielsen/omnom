@@ -347,7 +347,7 @@ func createEngine(cfg *config.Config) *gin.Engine {
 	tplFuncMap["BaseURL"] = baseURL
 	tplFuncMap["URLFor"] = URLFor
 	// ROUTES
-	e.Static("/content", cfg.App.StaticDir+"/data/")
+	e.Static("/content", cfg.Storage.RootDir)
 	e.StaticFS("/static", http.FS(static.FS))
 	for _, ep := range Endpoints {
 		if ep.AuthRequired {
