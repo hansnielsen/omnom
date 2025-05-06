@@ -11,13 +11,12 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
-	"path"
 	"reflect"
 	"time"
 
 	"github.com/asciimoo/omnom/config"
 	"github.com/asciimoo/omnom/model"
+	"github.com/asciimoo/omnom/static"
 	"github.com/asciimoo/omnom/storage"
 	"github.com/asciimoo/omnom/validator"
 
@@ -198,8 +197,7 @@ func createBookmark(c *gin.Context) {
 	u, _ := cu.(*model.User)
 	urlString := c.PostForm("url")
 	if snapshotJS == "" {
-		jsPath := path.Join(cfg.(*config.Config).App.StaticDir, "js", "snapshot.js")
-		b, err := os.ReadFile(jsPath)
+		b, err := static.FS.ReadFile("js/snapshot.js")
 		if err != nil {
 			log.Fatal(err)
 		}
