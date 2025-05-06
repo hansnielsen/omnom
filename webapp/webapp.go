@@ -322,7 +322,7 @@ func Run(cfg *config.Config) {
 	e.HTMLRender = createRenderer(templates.FS)
 
 	// ROUTES
-	e.Static("/content", cfg.Storage.RootDir)
+	e.StaticFS("/content", http.FS(storage.FS()))
 	e.StaticFS("/static", http.FS(static.FS))
 	for _, ep := range Endpoints {
 		if ep.AuthRequired {
