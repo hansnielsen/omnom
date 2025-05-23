@@ -8,9 +8,11 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"io"
 	"io/fs"
 	"net/http"
 	"net/url"
+	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -323,7 +325,6 @@ func createEngine(cfg *config.Config) *gin.Engine {
 	e.Use(ConfigMiddleware(cfg))
 	e.Use(CSRFMiddleware())
 	e.Use(ErrorLoggerMiddleware())
-	e.Use(GzipMiddleware())
 	authorized := e.Group("/")
 	authorized.Use(authRequiredMiddleware)
 
@@ -347,8 +348,8 @@ func createEngine(cfg *config.Config) *gin.Engine {
 	tplFuncMap["BaseURL"] = baseURL
 	tplFuncMap["URLFor"] = URLFor
 	// ROUTES
-	e.StaticFS("/content", http.FS(storage.FS()))
-	e.StaticFS("/static", http.FS(static.FS))
+	staticFS(e, "/content", storage.FS(), true)
+	staticFS(e, "/static", static.FS, false)
 	for _, ep := range Endpoints {
 		if ep.AuthRequired {
 			registerEndpoint(authorized, ep)
@@ -359,6 +360,42 @@ func createEngine(cfg *config.Config) *gin.Engine {
 	e.NoRoute(notFoundView)
 	e.HTMLRender = createRenderer(templates.FS)
 	return e
+}
+
+// staticFS returns files without any directory indexing and can apply
+// various content settings for snapshots
+func staticFS(e *gin.Engine, prefix string, fsys fs.FS, snapshotContent bool) {
+	handler := func(c *gin.Context) {
+		name := strings.TrimPrefix(c.Param("filepath"), "/")
+		f, err := fsys.Open(name)
+		if err != nil {
+			notFoundView(c)
+			return
+		}
+		defer f.Close()
+		info, err := f.Stat()
+		if err != nil || info.IsDir() {
+			notFoundView(c)
+			return
+		}
+		seeker, ok := f.(io.ReadSeeker)
+		if !ok {
+			notFoundView(c)
+			return
+		}
+		// Don't add gzip or content-type headers until after we've handled
+		// all of the error cases so that 404 pages get rendered correctly.
+		if snapshotContent {
+			if strings.HasPrefix(name, "snapshots/") {
+				c.Header("Content-Type", "text/html; charset=utf-8")
+			}
+			c.Header("Content-Encoding", "gzip")
+		}
+		http.ServeContent(c.Writer, c.Request, name, info.ModTime(), seeker)
+	}
+	pattern := path.Join(prefix, "/*filepath")
+	e.GET(pattern, handler)
+	e.HEAD(pattern, handler)
 }
 
 func Run(cfg *config.Config) {
@@ -550,18 +587,6 @@ func ErrorLoggerMiddleware() gin.HandlerFunc {
 		if ok {
 			log.Error().Str("Error", err.(string)).Msg("webapp error")
 		}
-	}
-}
-
-func GzipMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		if strings.Contains(c.Request.URL.Path, "/content/") {
-			if strings.Contains(c.Request.URL.Path, "/content/snapshots") {
-				c.Header("Content-Type", "text/html; charset=utf-8")
-			}
-			c.Header("Content-Encoding", "gzip")
-		}
-		c.Next()
 	}
 }
 
